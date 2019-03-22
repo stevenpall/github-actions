@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e -o pipefail
+
+# Ensure all necessary environment variables are set
+if [[ -z "$GITHUB_USERNAME" ]]; then
+    echo "Set the GITHUB_USERNAME env variable"
+    exit 1
+elif [[ -z "$GITHUB_TOKEN" ]]; then
+    echo "Set the GITHUB_TOKEN env variable"
+    exit 1
+elif [[ -z "$GITHUB_ORG" ]]; then
+    echo "Set the GITHUB_ORG env variable"
+    exit 1
+elif [[ -z "$FLUX_REPO" ]]; then
+    echo "Set the FLUX_REPO env variable"
+    exit 1
+elif [[ -z "$FLUX_BRANCH" ]]; then
+    echo "Set the FLUX_BRANCH env variable"
+    exit 1
+elif [[ -z "$FLUX_PATH" ]]; then
+    echo "Set the FLUX_PATH env variable"
+    exit 1
+elif [[ -z "$FLUX_SERVICE" ]]; then
+    echo "Set the FLUX_SERVICE env variable"
+    exit 1
+elif [[ -z "$PULL_REQUEST_BRANCH" ]]; then
+    echo "Set the PULL_REQUEST_BRANCH env variable"
+    exit 1
+elif [[ -z "$COMMIT_USER" ]]; then
+    echo "Set the COMMIT_USER env variable"
+    exit 1
+elif [[ -z "$COMMIT_EMAIL" ]]; then
+    echo "Set the COMMIT_EMAIL env variable"
+    exit 1
+fi
+
+# Clone the Flux config repo
+if [[ ! -d "$FLUX_REPO" ]]; then
+    git clone -b "${FLUX_BRANCH}" https://"${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_ORG}/${FLUX_REPO}"
+fi
+
+# Remove the pull request branch HelmRelease
+rm -f "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
+
+# Commit changes
+git -C "$FLUX_REPO" config user.name "${COMMIT_USER}"
+git -C "$FLUX_REPO" config user.email "${COMMIT_EMAIL}"
+git -C "$FLUX_REPO" add -A
+git -C "$FLUX_REPO" commit -m "Remove pull request HelmRelease for ${PULL_REQUEST_BRANCH} branch"
+git -C "$FLUX_REPO" push -u origin HEAD
