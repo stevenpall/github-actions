@@ -8,14 +8,14 @@ set -e -o pipefail
 # $INGRESS_HOSTNAME
 
 # Ensure all necessary environment variables are set
-if [[ -z "$GITHUB_USERNAME" ]]; then
-    echo "Set the GITHUB_USERNAME env variable"
+if [[ -z "$USERNAME" ]]; then
+    echo "Set the USERNAME env variable"
     exit 1
 elif [[ -z "$GITHUB_TOKEN" ]]; then
     echo "Set the GITHUB_TOKEN env variable"
     exit 1
-elif [[ -z "$GITHUB_ORG" ]]; then
-    echo "Set the GITHUB_ORG env variable"
+elif [[ -z "$ORG" ]]; then
+    echo "Set the ORG env variable"
     exit 1
 elif [[ -z "$FLUX_REPO" ]]; then
     echo "Set the FLUX_REPO env variable"
@@ -42,7 +42,7 @@ fi
 
 # Clone the Flux config repo
 if [[ ! -d "$FLUX_REPO" ]]; then
-    git clone -b "${FLUX_BRANCH}" https://"${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_ORG}/${FLUX_REPO}"
+    git clone -b "${FLUX_BRANCH}" https://"${USERNAME}:${GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
 fi
 
 # Create a new HelmRelease
