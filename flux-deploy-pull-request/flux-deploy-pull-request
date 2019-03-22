@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e -o pipefail
 
+env
+
 # Optional env vars
 # $DISABLE_SEALED_SECRETS
 # $ADDITIONAL_CONFIG
