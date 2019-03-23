@@ -63,7 +63,7 @@ main() {
     elif [[ ${PULL_REQUEST_STATE} == "closed" ]]; then
         cleanup
     else
-        echo "Unknown pull request state for SHA: ${GITHUB_SHA}"
+        echo "Unknown pull request state for ${GITHUB_SHA}: ${PULL_REQUEST_STATE}"
         exit 1
     fi
 
