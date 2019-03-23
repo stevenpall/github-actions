@@ -34,9 +34,6 @@ elif [[ -z "$FLUX_PATH" ]]; then
 elif [[ -z "$FLUX_SERVICE" ]]; then
     echo "Set the FLUX_SERVICE env variable"
     exit 1
-elif [[ -z "$PULL_REQUEST_BRANCH" ]]; then
-    echo "Set the PULL_REQUEST_BRANCH env variable"
-    exit 1
 elif [[ -z "$COMMIT_USER" ]]; then
     echo "Set the COMMIT_USER env variable"
     exit 1
