@@ -18,6 +18,6 @@ ENV YQ_VERSION 2.2.1
 RUN wget -q https://github.com/mikefarah/yq/releases/download/$YQ_VERSION/yq_linux_amd64 -O /usr/local/bin/yq \
     && chmod +x /usr/local/bin/yq
 
-COPY flux-deploy-pull-request /usr/local/bin/flux-deploy-pull-request
+COPY flux-pull-request /usr/local/bin/flux-pull-request
 
-ENTRYPOINT ["flux-deploy-pull-request"]
+ENTRYPOINT ["flux-pull-request"]
