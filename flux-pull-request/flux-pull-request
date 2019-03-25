@@ -1,5 +1,9 @@
 #!/bin/bash
-set -e -o pipefail -x
+set -e -o pipefail
+
+if [[ -n "$VERBOSE" ]]; then
+    set -x
+fi
 
 URI=https://api.github.com
 API_VERSION=v3
@@ -46,6 +50,7 @@ REPO=$(basename "${GITHUB_REPOSITORY}")
 main() {
     # Clone the Flux config repo
     if [[ ! -d "$FLUX_REPO" ]]; then
+        echo "Cloning https://${USERNAME}:${FLUX_GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
         git clone -b "${FLUX_BRANCH}" https://"${USERNAME}:${FLUX_GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
     fi
 
@@ -67,8 +72,7 @@ main() {
         exit 1
     fi
 
-    cat "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
-
+    echo "Creating new commit and pushing to https://${USERNAME}:${FLUX_GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
     git -C "$FLUX_REPO" config user.name "${COMMIT_USER}"
     git -C "$FLUX_REPO" config user.email "${COMMIT_EMAIL}"
     git -C "$FLUX_REPO" add -A
@@ -79,25 +83,30 @@ main() {
 deploy() {
     # Create a new HelmRelease
     if [[ ! -f "$FLUX_REPO/$FLUX_PATH/$FLUX_SERVICE-$PULL_REQUEST_BRANCH.yaml" ]]; then
+        echo "Pull request HelmRelease does not exist. Creating at: ${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
         cp "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}.yaml" "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     fi
 
     BRANCH_SERVICE_NAME="${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}"
     PULL_REQUEST_BRANCH_GLOB="glob:${PULL_REQUEST_BRANCH}-*"
+    echo "Updating HelmRelease fields to ${BRANCH_SERVICE_NAME}"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" metadata.name "${BRANCH_SERVICE_NAME}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" metadata.annotations.[flux.weave.works/tag.chart-image] "${PULL_REQUEST_BRANCH_GLOB}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" spec.releaseName "${BRANCH_SERVICE_NAME}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
 
     if [[ -n "$ADDITIONAL_CONFIG" ]]; then
         if [[ -n "$ADDITIONAL_CONFIG_SUBSTITUTION" ]]; then
+            echo "Setting ADDITIONAL_CONFIG fields to ${BRANCH_SERVICE_NAME}"
             ADDITIONAL_CONFIG=$(echo "${ADDITIONAL_CONFIG}" | sed 's#'"${FLUX_SERVICE}"'#'"${BRANCH_SERVICE_NAME}"'#g')
         fi
+        echo "Writing updated fields to ${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
         echo $ADDITIONAL_CONFIG | yq r - | yq m - "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}.yaml" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     fi
 }
 
 cleanup() {
     # Remove the pull request branch HelmRelease
+    echo "Removing ${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     rm -f "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
 }
 
