@@ -105,7 +105,7 @@ deploy() {
             ADDITIONAL_CONFIG=$(echo "${ADDITIONAL_CONFIG}" | sed 's#'"${FLUX_SERVICE}"'#'"${BRANCH_SERVICE_NAME}"'#g')
         fi
         echo "Writing updated fields to ${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
-        echo $ADDITIONAL_CONFIG | yq r - | yq m "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}.yaml" - | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
+        echo $ADDITIONAL_CONFIG | yq r - | yq m -x "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}.yaml" - | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     fi
 }
 
