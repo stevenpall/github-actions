@@ -4,7 +4,7 @@ set -e -o pipefail -x
 URI=https://api.github.com
 API_VERSION=v3
 API_HEADER="Accept: application/vnd.github.${API_VERSION}+json"
-AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
+AUTH_HEADER="Authorization: token ${FLUX_GITHUB_TOKEN}"
 
 # Optional env vars
 # $ADDITIONAL_CONFIG
@@ -14,8 +14,8 @@ AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 if [[ -z "$USERNAME" ]]; then
     echo "Set the USERNAME env variable"
     exit 1
-elif [[ -z "$GITHUB_TOKEN" ]]; then
-    echo "Set the GITHUB_TOKEN env variable"
+elif [[ -z "$FLUX_GITHUB_TOKEN" ]]; then
+    echo "Set the FLUX_GITHUB_TOKEN env variable"
     exit 1
 elif [[ -z "$ORG" ]]; then
     echo "Set the ORG env variable"
@@ -46,7 +46,7 @@ REPO=$(basename "${GITHUB_REPOSITORY}")
 main() {
     # Clone the Flux config repo
     if [[ ! -d "$FLUX_REPO" ]]; then
-        git clone -b "${FLUX_BRANCH}" https://"${USERNAME}:${GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
+        git clone -b "${FLUX_BRANCH}" https://"${USERNAME}:${FLUX_GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
     fi
 
     # Get the PR state and determine what to do
