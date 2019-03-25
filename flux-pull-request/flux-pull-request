@@ -7,10 +7,8 @@ API_HEADER="Accept: application/vnd.github.${API_VERSION}+json"
 AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 
 # Optional env vars
-# $DISABLE_SEALED_SECRETS
 # $ADDITIONAL_CONFIG
 # $ADDITIONAL_CONFIG_SUBSTITUTION
-# $INGRESS_HOSTNAME
 
 # Ensure all necessary environment variables are set
 if [[ -z "$USERNAME" ]]; then
@@ -55,12 +53,14 @@ main() {
     PULL_REQUEST_STATE=$(curl -XGET -fsSL \
                             -H "${AUTH_HEADER}" \
                             -H "${API_HEADER}" \
-                            "${URI}/repos/${ORG}/${REPO}/pulls?q=${GITHUB_SHA}" \
-                            | jq -r '.[] | select(.head.sha=="${GITHUB_SHA}") | .state')
+                            "${URI}/repos/${ORG}/${REPO}/pulls" \
+                            | jq -r '.[] | select(.head.sha=="'${GITHUB_SHA}'") | .state')
 
     if [[ ${PULL_REQUEST_STATE} == "open" ]]; then
+        echo "Pull request is open. Running deployment"
         deploy
     elif [[ ${PULL_REQUEST_STATE} == "closed" ]]; then
+        echo "Pull request is closed. Cleaning up resources"
         cleanup
     else
         echo "Unknown pull request state for ${GITHUB_SHA}: ${PULL_REQUEST_STATE}"
@@ -85,20 +85,8 @@ deploy() {
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" metadata.name "${BRANCH_SERVICE_NAME}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" metadata.annotations.[flux.weave.works/tag.chart-image] "${PULL_REQUEST_BRANCH_GLOB}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" spec.releaseName "${BRANCH_SERVICE_NAME}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
-    yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" spec.values.service.name "${BRANCH_SERVICE_NAME}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
-
-    if [[ -n "$INGRESS_HOSTNAME" ]]; then
-        DOMAIN=$(echo "${INGRESS_HOSTNAME}" | cut -f2- -d '.')
-        BRANCH_HOSTNAME="${BRANCH_SERVICE_NAME}.${DOMAIN}"
-        sed -i 's#'"${INGRESS_HOSTNAME}"'#'"${BRANCH_HOSTNAME}"'#' "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
-    fi
-
-    if [[ -n "$DISABLE_SEALED_SECRETS" ]]; then
-        yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" spec.values.sealedSecrets.enabled false | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
-    fi
 
     if [[ -n "$ADDITIONAL_CONFIG" ]]; then
-        ADDITIONAL_CONFIG=$(eval echo '${ADDITIONAL_CONFIG}')
         if [[ -n "$ADDITIONAL_CONFIG_SUBSTITUTION" ]]; then
             ADDITIONAL_CONFIG=$(echo "${ADDITIONAL_CONFIG}" | sed 's#'"${FLUX_SERVICE}"'#'"${BRANCH_SERVICE_NAME}"'#g')
         fi
