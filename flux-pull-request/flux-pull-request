@@ -67,6 +67,8 @@ main() {
         exit 1
     fi
 
+    cat "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
+
     git -C "$FLUX_REPO" config user.name "${COMMIT_USER}"
     git -C "$FLUX_REPO" config user.email "${COMMIT_EMAIL}"
     git -C "$FLUX_REPO" add -A
@@ -90,7 +92,7 @@ deploy() {
         if [[ -n "$ADDITIONAL_CONFIG_SUBSTITUTION" ]]; then
             ADDITIONAL_CONFIG=$(echo "${ADDITIONAL_CONFIG}" | sed 's#'"${FLUX_SERVICE}"'#'"${BRANCH_SERVICE_NAME}"'#g')
         fi
-        echo $ADDITIONAL_CONFIG | yq r - | yq m - "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
+        echo $ADDITIONAL_CONFIG | yq r - | yq m - "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}.yaml" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     fi
 }
 
