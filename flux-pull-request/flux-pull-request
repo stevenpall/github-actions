@@ -72,12 +72,17 @@ main() {
         exit 1
     fi
 
-    echo "Creating new commit and pushing to https://${USERNAME}:${FLUX_GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
-    git -C "$FLUX_REPO" config user.name "${COMMIT_USER}"
-    git -C "$FLUX_REPO" config user.email "${COMMIT_EMAIL}"
-    git -C "$FLUX_REPO" add -A
-    git -C "$FLUX_REPO" commit -m "Create pull request HelmRelease for ${PULL_REQUEST_BRANCH} branch"
-    git -C "$FLUX_REPO" push -u origin HEAD
+    if [[ $(git -C "$FLUX_REPO" status --porcelain) ]]; then
+        echo "Creating new commit and pushing to https://${USERNAME}:${FLUX_GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
+        git -C "$FLUX_REPO" config user.name "${COMMIT_USER}"
+        git -C "$FLUX_REPO" config user.email "${COMMIT_EMAIL}"
+        git -C "$FLUX_REPO" add -A
+        git -C "$FLUX_REPO" commit -m "Create pull request HelmRelease for ${PULL_REQUEST_BRANCH} branch"
+        git -C "$FLUX_REPO" push -u origin HEAD
+    else
+        echo "No changes detected. Exiting"
+        exit 0
+    fi
 }
 
 deploy() {
