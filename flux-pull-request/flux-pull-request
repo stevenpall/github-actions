@@ -44,7 +44,7 @@ elif [[ -z "$COMMIT_EMAIL" ]]; then
     exit 1
 fi
 
-PULL_REQUEST_BRANCH=$(basename "${GITHUB_REF}")
+PULL_REQUEST_BRANCH=$(basename "${GITHUB_REF}" | tr '[:upper:]' '[:lower:]')
 REPO=$(basename "${GITHUB_REPOSITORY}")
 
 main() {
