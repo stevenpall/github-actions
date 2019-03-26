@@ -64,8 +64,10 @@ main() {
     if [[ ${PULL_REQUEST_STATE} == "open" ]]; then
         echo "Pull request is open. Running deployment"
         deploy
+        GIT_COMMIT_MESSAGE="Create pull request HelmRelease for ${PULL_REQUEST_BRANCH} branch"
     elif [[ ${PULL_REQUEST_STATE} == "closed" ]]; then
         echo "Pull request is closed. Cleaning up resources"
+        GIT_COMMIT_MESSAGE="Remove pull request HelmRelease for ${PULL_REQUEST_BRANCH} branch"
         cleanup
     else
         echo "Unknown pull request state for ${GITHUB_SHA}: ${PULL_REQUEST_STATE}"
@@ -77,7 +79,7 @@ main() {
         git -C "$FLUX_REPO" config user.name "${COMMIT_USER}"
         git -C "$FLUX_REPO" config user.email "${COMMIT_EMAIL}"
         git -C "$FLUX_REPO" add -A
-        git -C "$FLUX_REPO" commit -m "Create pull request HelmRelease for ${PULL_REQUEST_BRANCH} branch"
+        git -C "$FLUX_REPO" commit -m "${GIT_COMMIT_MESSAGE}"
         git -C "$FLUX_REPO" push -u origin HEAD
     else
         echo "No changes detected. Exiting"
