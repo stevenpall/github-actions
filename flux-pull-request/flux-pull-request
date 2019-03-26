@@ -58,7 +58,7 @@ main() {
     PULL_REQUEST_STATE=$(curl -XGET -fsSL \
                             -H "${AUTH_HEADER}" \
                             -H "${API_HEADER}" \
-                            "${URI}/repos/${ORG}/${REPO}/pulls" \
+                            "${URI}/repos/${ORG}/${REPO}/pulls?state=all" \
                             | jq -r '.[] | select(.head.sha=="'${GITHUB_SHA}'") | .state')
 
     if [[ ${PULL_REQUEST_STATE} == "open" ]]; then
