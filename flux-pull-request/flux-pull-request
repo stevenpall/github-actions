@@ -94,8 +94,12 @@ deploy() {
 
     BRANCH_SERVICE_NAME="${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}"
     PULL_REQUEST_BRANCH_GLOB="glob:${PULL_REQUEST_BRANCH}-*"
-    echo "Updating HelmRelease fields to ${BRANCH_SERVICE_NAME}"
+    REGISTRY=$(yq r "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" spec.values.image | cut -f1 -d ":" | cut -f1 -d '/')
+    IMAGE_TAG="${PULL_REQUEST_BRANCH}-${GITHUB_SHA}"
+
+    echo "Updating HelmRelease fields"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" metadata.name "${BRANCH_SERVICE_NAME}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
+    yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" spec.values.image "${REGISTRY}/${FLUX_SERVICE}:${IMAGE_TAG}"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" metadata.annotations.[flux.weave.works/tag.chart-image] "${PULL_REQUEST_BRANCH_GLOB}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" spec.releaseName "${BRANCH_SERVICE_NAME}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
 
