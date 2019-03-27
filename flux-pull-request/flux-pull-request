@@ -48,6 +48,12 @@ PULL_REQUEST_BRANCH=$(basename "${GITHUB_REF}" | tr '[:upper:]' '[:lower:]')
 REPO=$(basename "${GITHUB_REPOSITORY}")
 
 main() {
+    # Don't proceed if the base branch is master
+    if [[ "$PULL_REQUEST_BRANCH" == "master" ]]; then
+        echo "Base branch is master. Not proceeding."
+        exit 0
+    fi
+
     # Clone the Flux config repo
     if [[ ! -d "$FLUX_REPO" ]]; then
         echo "Cloning https://${USERNAME}:${FLUX_GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
