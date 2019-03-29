@@ -1,4 +1,6 @@
 # GitHub Actions
+[![Travis CI](https://img.shields.io/travis/stevenpall/github-actions.svg?style=for-the-badge)](https://travis-ci.org/stevenpall/github-actions)
+
 A collection of GitHub actions
 
 See action subdirectories for more information on usage.
