@@ -42,15 +42,23 @@ elif [[ -z "$COMMIT_USER" ]]; then
 elif [[ -z "$COMMIT_EMAIL" ]]; then
     echo "Set the COMMIT_EMAIL env variable"
     exit 1
+elif [[ -z "$BASE_BRANCH" ]]; then
+    echo "Set the BASE_BRANCH env variable"
+    exit 1
 fi
 
 PULL_REQUEST_BRANCH=$(basename "${GITHUB_REF}" | tr '[:upper:]' '[:lower:]')
 REPO=$(basename "${GITHUB_REPOSITORY}")
 
 main() {
-    # Don't proceed if the base branch is master
-    if [[ "$PULL_REQUEST_BRANCH" == "master" ]]; then
-        echo "Base branch is master. Not proceeding."
+    # Don't proceed if the base branch not BASE_BRANCH
+    PULL_REQUEST_BASE_BRANCH=$(curl -XGET -fsSL \
+                            -H "${AUTH_HEADER}" \
+                            -H "${API_HEADER}" \
+                            "${URI}/repos/${ORG}/${REPO}/pulls?state=all" \
+                            | jq -r '.[] | select(.head.sha=="'${GITHUB_SHA}'") | .base | .ref')
+    if [[ "$PULL_REQUEST_BASE_BRANCH" != "$BASE_BRANCH" ]]; then
+        echo "Base branch is not $BASE_BRANCH. Exiting."
         exit 0
     fi
 
