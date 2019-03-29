@@ -51,7 +51,7 @@ PULL_REQUEST_BRANCH=$(basename "${GITHUB_REF}" | tr '[:upper:]' '[:lower:]')
 REPO=$(basename "${GITHUB_REPOSITORY}")
 
 main() {
-    # Don't proceed if the base branch not BASE_BRANCH
+    # Don't proceed if the base branch is not BASE_BRANCH
     PULL_REQUEST_BASE_BRANCH=$(curl -XGET -fsSL \
                             -H "${AUTH_HEADER}" \
                             -H "${API_HEADER}" \
@@ -88,6 +88,7 @@ main() {
         exit 1
     fi
 
+    # Check if our changes actually modified anything in the repo, and if so, commit and push them
     if [[ $(git -C "$FLUX_REPO" status --porcelain) ]]; then
         echo "Creating new commit and pushing to https://${USERNAME}:${FLUX_GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
         git -C "$FLUX_REPO" config user.name "${COMMIT_USER}"
@@ -110,11 +111,14 @@ deploy() {
 
     BRANCH_SERVICE_NAME="${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}"
     PULL_REQUEST_BRANCH_GLOB="glob:${PULL_REQUEST_BRANCH}-*"
+
+    # Update the basic HelmRelease fields
     echo "Updating HelmRelease fields to ${BRANCH_SERVICE_NAME}"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" metadata.name "${BRANCH_SERVICE_NAME}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" metadata.annotations.[flux.weave.works/tag.chart-image] "${PULL_REQUEST_BRANCH_GLOB}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     yq w "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" spec.releaseName "${BRANCH_SERVICE_NAME}" | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
 
+    # Add ADDITIONAL_CONFIG fields to the HelmRelease, and if ADDITIONAL_CONFIG_SUBSTITUTION is set, sub FLUX_SERVICE for BRANCH_SERVICE_NAME
     if [[ -n "$ADDITIONAL_CONFIG" ]]; then
         if [[ -n "$ADDITIONAL_CONFIG_SUBSTITUTION" ]]; then
             echo "Setting ADDITIONAL_CONFIG fields to ${BRANCH_SERVICE_NAME}"
