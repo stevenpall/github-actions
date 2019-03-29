@@ -76,15 +76,15 @@ main() {
                             | jq -r '.[] | select(.head.sha=="'${GITHUB_SHA}'") | .state')
 
     if [[ ${PULL_REQUEST_STATE} == "open" ]]; then
-        echo "Pull request is open. Running deployment"
+        echo "Pull request is open. Running deployment."
         deploy
         GIT_COMMIT_MESSAGE="Create pull request HelmRelease for ${PULL_REQUEST_BRANCH} branch"
     elif [[ ${PULL_REQUEST_STATE} == "closed" ]]; then
-        echo "Pull request is closed. Cleaning up resources"
+        echo "Pull request is closed. Cleaning up resources."
         GIT_COMMIT_MESSAGE="Remove pull request HelmRelease for ${PULL_REQUEST_BRANCH} branch"
         cleanup
     else
-        echo "Unknown pull request state for ${GITHUB_SHA}: ${PULL_REQUEST_STATE}"
+        echo "Unknown pull request state for ${GITHUB_SHA}: ${PULL_REQUEST_STATE}. Exiting."
         exit 1
     fi
 
@@ -96,7 +96,7 @@ main() {
         git -C "$FLUX_REPO" commit -m "${GIT_COMMIT_MESSAGE}"
         git -C "$FLUX_REPO" push -u origin HEAD
     else
-        echo "No changes detected. Exiting"
+        echo "No changes detected. Exiting."
         exit 0
     fi
 }
@@ -104,7 +104,7 @@ main() {
 deploy() {
     # Create a new HelmRelease
     if [[ ! -f "$FLUX_REPO/$FLUX_PATH/$FLUX_SERVICE-$PULL_REQUEST_BRANCH.yaml" ]]; then
-        echo "Pull request HelmRelease does not exist. Creating at: ${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
+        echo "Pull request HelmRelease does not exist. Creating at: ${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml."
         cp "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}.yaml" "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     fi
 
