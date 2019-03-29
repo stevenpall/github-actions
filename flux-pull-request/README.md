@@ -1,5 +1,17 @@
 # GitHub Action for Deploying Pull Requests via Weave Flux
 
+**Table of Contents**
+<!-- toc -->
+
+- [Background](#background)
+- [Usage](#usage)
+  * [Secrets](#secrets)
+  * [Environment Variables](#environment-variables)
+- [Notes](#notes)
+  * [ADDITIONAL_CONFIG/ADDITIONAL_CONFIG_SUBSTITUTION](#additional_configadditional_config_substitution)
+  * [Helm Release Deletion](#helm-release-deletion)
+  
+<!-- tocstop -->
 
 ## Background
 
@@ -18,7 +30,7 @@ workflow "Flux Pull Request" {
   resolves = ["flux-pull-request"]
 }
 
-action "flux" {
+action "flux-pull-request" {
   uses = "stevenpall/github-actions/flux-pull-request@master"
   secrets = ["FLUX_GITHUB_TOKEN"]
   env = {
