@@ -3,7 +3,7 @@ A collection of GitHub actions
 
 See action subdirectories for more information on usage.
 
-# Running the tests
+# Running the Tests
 You can simply run `make test`. `shellcheck` will be run in a Docker container.
 
 # Acknowledgements
