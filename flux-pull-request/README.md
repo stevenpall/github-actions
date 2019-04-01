@@ -132,4 +132,4 @@ spec:
 
 To have Flux clean up resources it created, you must be running version `1.11.0` and include the flag `--sync-garbage-collection`. More information on this feature can be found [here](https://github.com/weaveworks/flux/blob/master/site/garbagecollection.md).
 
-Unfortunately, it appears that there is currently a bug with this feature (https://github.com/weaveworks/flux/issues/1873), so Helm releases may not be properly cleanup up even though their `HelmRelease` has been deleted from the config repo. For now, this may require a manual `helm del --purge <release name>`.
+Unfortunately, it appears that there is currently a bug with this feature (https://github.com/weaveworks/flux/issues/1873), so Helm releases may not be properly cleaned up even though their `HelmRelease` has been deleted from the config repo. For now, this may require a manual `helm del --purge <release name>`.
