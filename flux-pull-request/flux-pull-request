@@ -88,6 +88,9 @@ main() {
         exit 1
     fi
 
+    # Try pulling in case there have been commits since we cloned
+    git -C "$FLUX_REPO" pull
+
     # Check if our changes actually modified anything in the repo, and if so, commit and push them
     if [[ $(git -C "$FLUX_REPO" status --porcelain) ]]; then
         echo "Creating new commit and pushing to https://${USERNAME}:${FLUX_GITHUB_TOKEN}@github.com/${ORG}/${FLUX_REPO}"
