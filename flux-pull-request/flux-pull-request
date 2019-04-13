@@ -46,6 +46,7 @@ elif [[ -z "$COMMIT_EMAIL" ]]; then
 elif [[ -z "$BASE_BRANCH" ]]; then
     echo "Set the BASE_BRANCH env variable"
     exit 1
+fi
 
 PULL_REQUEST_BRANCH=$(basename "${GITHUB_REF}" | tr '[:upper:]' '[:lower:]' | sed 's/_/-/g')
 REPO=$(basename "${GITHUB_REPOSITORY}")
