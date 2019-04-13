@@ -49,7 +49,7 @@ action "flux-pull-request" {
     COMMIT_EMAIL = "<Email address to make commits as>"
     ORG = "<Flux config repo user/org>"
     USERNAME = "<Username to use for cloning Flux config repo>"
-    INGRESS_DOMAIN= "<Domain of ingress hostname that will be created (e.g. mycompany.com)"
+    INGRESS_DOMAIN= "<Domain of ingress hostname that will be created (e.g. mycompany.com)>"
     ADDITIONAL_CONFIG = "<A JSON representation of any additional configs>"
     ADDITIONAL_CONFIG_SUBSTITUTION = "<true/false> Substitute the service name for branch-name-service-name"
   }
