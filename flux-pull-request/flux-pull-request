@@ -13,6 +13,7 @@ AUTH_HEADER="Authorization: token ${FLUX_GITHUB_TOKEN}"
 # Optional env vars
 # $ADDITIONAL_CONFIG
 # $ADDITIONAL_CONFIG_SUBSTITUTION
+# $INGRESS_DOMAIN
 
 # Ensure all necessary environment variables are set
 if [[ -z "$USERNAME" ]]; then
@@ -45,18 +46,22 @@ elif [[ -z "$COMMIT_EMAIL" ]]; then
 elif [[ -z "$BASE_BRANCH" ]]; then
     echo "Set the BASE_BRANCH env variable"
     exit 1
-fi
 
 PULL_REQUEST_BRANCH=$(basename "${GITHUB_REF}" | tr '[:upper:]' '[:lower:]' | sed 's/_/-/g')
 REPO=$(basename "${GITHUB_REPOSITORY}")
 
 main() {
     # Don't proceed if the base branch is not BASE_BRANCH
+    PULL_REQUEST_NUMBER=$(curl -XGET -fsSL \
+                               -H "${AUTH_HEADER}" \
+                               -H "${API_HEADER}" \
+                               "${URI}/repos/${ORG}/${REPO}/pulls?state=all" \
+                               | jq -r '.[] | select(.head.sha=="'${GITHUB_SHA}'") | .state')
     PULL_REQUEST_BASE_BRANCH=$(curl -XGET -fsSL \
-                            -H "${AUTH_HEADER}" \
-                            -H "${API_HEADER}" \
-                            "${URI}/repos/${ORG}/${REPO}/pulls?state=all" \
-                            | jq -r '.[] | select(.head.sha=="'${GITHUB_SHA}'") | .base | .ref')
+                                    -H "${AUTH_HEADER}" \
+                                    -H "${API_HEADER}" \
+                                    "${URI}/repos/${ORG}/${REPO}/pulls?state=all" \
+                                    | jq -r '.[] | select(.head.sha=="'${GITHUB_SHA}'") | .number')
     if [[ "$PULL_REQUEST_BASE_BRANCH" != "$BASE_BRANCH" ]]; then
         echo "Base branch is not $BASE_BRANCH. Exiting."
         exit 0
@@ -70,10 +75,10 @@ main() {
 
     # Get the PR state and determine what to do
     PULL_REQUEST_STATE=$(curl -XGET -fsSL \
-                            -H "${AUTH_HEADER}" \
-                            -H "${API_HEADER}" \
-                            "${URI}/repos/${ORG}/${REPO}/pulls?state=all" \
-                            | jq -r '.[] | select(.head.sha=="'${GITHUB_SHA}'") | .state')
+                              -H "${AUTH_HEADER}" \
+                              -H "${API_HEADER}" \
+                              "${URI}/repos/${ORG}/${REPO}/pulls?state=all" \
+                              | jq -r '.[] | select(.head.sha=="'${GITHUB_SHA}'") | .state')
 
     if [[ ${PULL_REQUEST_STATE} == "open" ]]; then
         echo "Pull request is open. Running deployment."
@@ -131,8 +136,17 @@ deploy() {
         echo "${ADDITIONAL_CONFIG}" | yq r - | yq m -x "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml" - | sponge "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
     fi
 
-    #Re-insert --- at beginning of file (this will show up as a diff and thus cause a new commit to be made)
+    # Re-insert --- at beginning of file (this will show up as a diff and thus cause a new commit to be made)
     sed -i '1s/^/---\n/' "${FLUX_REPO}/${FLUX_PATH}/${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.yaml"
+
+    # Add comment to the PR with the ingress hostname
+    if [[ -n "$INGRESS_DOMAIN" ]]; then
+        PULL_REQUEST_BODY="Pull request branch deployment successful. Ingress hostname: https://${FLUX_SERVICE}-${PULL_REQUEST_BRANCH}.${INGRESS_DOMAIN}"
+        curl -XPOST -fsSL \
+             -H "${AUTH_HEADER}" \
+             -H "${API_HEADER}" \
+             "${URI}/repos/${ORG}/${REPO}/issues/${PULL_REQUEST_NUMBER}/comments?body=${PULL_REQUEST_BODY}"
+    fi
 }
 
 cleanup() {

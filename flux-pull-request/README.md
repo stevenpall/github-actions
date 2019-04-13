@@ -30,7 +30,13 @@ workflow "Flux Pull Request" {
   resolves = ["flux-pull-request"]
 }
 
+action "action-filter" {
+  uses = "actions/bin/filter@master"
+  args = "action 'opened|closed'"
+}
+
 action "flux-pull-request" {
+  needs = "action-filter"
   uses = "stevenpall/github-actions/flux-pull-request@master"
   secrets = ["FLUX_GITHUB_TOKEN"]
   env = {
@@ -43,6 +49,7 @@ action "flux-pull-request" {
     COMMIT_EMAIL = "<Email address to make commits as>"
     ORG = "<Flux config repo user/org>"
     USERNAME = "<Username to use for cloning Flux config repo>"
+    INGRESS_DOMAIN= "<Domain of ingress hostname that will be created (e.g. mycompany.com)"
     ADDITIONAL_CONFIG = "<A JSON representation of any additional configs>"
     ADDITIONAL_CONFIG_SUBSTITUTION = "<true/false> Substitute the service name for branch-name-service-name"
   }
@@ -71,6 +78,7 @@ action "flux-pull-request" {
 - USERNAME – **Required**
 - ADDITIONAL_CONFIG – **Optional**
 - ADDITIONAL_CONFIG_SUBSTITUTION – **Optional**
+- INGRESS_DOMAIN - **Optional**
 
 
 
